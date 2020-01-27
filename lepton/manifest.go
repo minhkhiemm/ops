@@ -103,15 +103,21 @@ func (m *Manifest) AddDirectory(dir string) error {
 			parts := strings.FieldsFunc(vmpath, func(c rune) bool { return c == '/' })
 			node := m.children
 			for i := 0; i < len(parts); i++ {
-				if _, ok := node[parts[i]]; !ok {
-					node[parts[i]] = make(map[string]interface{})
+				if _, ok := node[`"` + parts[i] + `"`]; !ok {
+					node[`"` + parts[i] + `"`] = make(map[string]interface{})
 				}
-				if reflect.TypeOf(node[parts[i]]).Kind() == reflect.String {
+                if (node[`"` + parts[i] + `"`]) != nil {
+				if reflect.TypeOf(node[`"` + parts[i] + `"`]).Kind() == reflect.String {
 					err := fmt.Errorf("directory %s is conflicting with an existing file", hostpath)
 					fmt.Println(err)
 					return err
 				}
-				node = node[parts[i]].(map[string]interface{})
+				node = node[`"` + parts[i] + `"`].(map[string]interface{})
+                } else {
+     				node = node[parts[i]].(map[string]interface{})
+                    fmt.Println("NILLLL")
+                }
+				// node = node[`"` + parts[i] + `"`].(map[string]interface{})
 			}
 		} else {
 			err = m.AddFile(vmpath, hostpath)
@@ -129,12 +135,12 @@ func (m *Manifest) FileExists(filepath string) bool {
 	parts := strings.FieldsFunc(filepath, func(c rune) bool { return c == '/' })
 	node := m.children
 	for i := 0; i < len(parts)-1; i++ {
-		if _, ok := node[parts[i]]; !ok {
+		if _, ok := node[`"` + parts[i] + `"`]; !ok {
 			return false
 		}
-		node = node[parts[i]].(map[string]interface{})
+		node = node[`"` + parts[i] + `"`].(map[string]interface{})
 	}
-	pathtest := node[parts[len(parts)-1]]
+	pathtest := node[`"` + parts[len(parts)-1] + `"`]
 	if pathtest != nil && reflect.TypeOf(pathtest).Kind() == reflect.String {
 		return true
 	}
@@ -146,25 +152,25 @@ func (m *Manifest) AddFile(filepath string, hostpath string) error {
 	parts := strings.FieldsFunc(filepath, func(c rune) bool { return c == '/' })
 	node := m.children
 	for i := 0; i < len(parts)-1; i++ {
-		if _, ok := node[parts[i]]; !ok {
-			node[parts[i]] = make(map[string]interface{})
+		if _, ok := node[`"` + parts[i] + `"`]; !ok {
+			node[`"` + parts[i] + `"`] = make(map[string]interface{})
 		}
-		node = node[parts[i]].(map[string]interface{})
+		node = node[`"` + parts[i] + `"`].(map[string]interface{})
 	}
-	pathtest := node[parts[len(parts)-1]]
+	pathtest := node[`"` + parts[len(parts)-1] + `"`]
 	if pathtest != nil && reflect.TypeOf(pathtest).Kind() != reflect.String {
 		err := fmt.Errorf("file %s overriding an existing directory", filepath)
 		fmt.Println(err)
 		return err
 	}
-	if pathtest != nil && reflect.TypeOf(pathtest).Kind() == reflect.String && node[parts[len(parts)-1]] != hostpath {
+	if pathtest != nil && reflect.TypeOf(pathtest).Kind() == reflect.String && node[`"` + parts[len(parts)-1] + `"`] != hostpath {
 		fmt.Printf("warning: overwriting existing file %s hostpath old: %s new: %s\n", filepath, node[parts[len(parts)-1]], hostpath)
 	}
 	_, err := lookupFile(m.targetRoot, hostpath)
 	if err != nil {
 		return err
 	}
-	node[parts[len(parts)-1]] = hostpath
+	node[`"` + parts[len(parts)-1] + `"`] = `"` + hostpath + `"`
 	return nil
 }
 
