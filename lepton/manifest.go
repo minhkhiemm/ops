@@ -179,12 +179,12 @@ func (m *Manifest) AddLibrary(path string) {
 	parts := strings.FieldsFunc(path, func(c rune) bool { return c == '/' })
 	node := m.children
 	for i := 0; i < len(parts)-1; i++ {
-		if _, ok := node[parts[i]]; !ok {
-			node[parts[i]] = make(map[string]interface{})
+		if _, ok := node[`"` + parts[i] + `"`]; !ok {
+			node[`"` + parts[i] + `"`] = make(map[string]interface{})
 		}
-		node = node[parts[i]].(map[string]interface{})
+		node = node[`"` + parts[i] + `"`].(map[string]interface{})
 	}
-	node[parts[len(parts)-1]] = path
+	node[`"` + parts[len(parts)-1] + `"`] = path
 }
 
 // AddUserData adds all files in dir to
