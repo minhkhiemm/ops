@@ -306,7 +306,9 @@ func buildImage(c *Config, m *Manifest) error {
 	var elfmanifest string
 	elfmanifest = m.String()
 
-    elfmanifest = strings.ReplaceAll(elfmanifest, `\"`, ``)
+	// this is fugly - i'd like to have this properly encoded in the
+	// future
+	elfmanifest = strings.ReplaceAll(elfmanifest, `\"`, ``)
 
 	if c.ManifestName != "" {
 		err := ioutil.WriteFile(c.ManifestName, []byte(elfmanifest), 0644)
@@ -334,16 +336,12 @@ func buildImage(c *Config, m *Manifest) error {
 	args = append(args, c.RunConfig.Imagename)
 	mkfs := exec.Command(c.Mkfs, args...)
 
-    zargs := strings.Join(args, " ")
-    fmt.Printf("%s %s\n", c.Mkfs, zargs)
-
 	stdin, err := mkfs.StdinPipe()
 	if err != nil {
 		return errors.Wrap(err, 1)
 	}
 	go func() {
 		defer stdin.Close()
-
 
 		io.WriteString(stdin, elfmanifest)
 	}()

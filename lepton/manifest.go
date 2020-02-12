@@ -103,21 +103,20 @@ func (m *Manifest) AddDirectory(dir string) error {
 			parts := strings.FieldsFunc(vmpath, func(c rune) bool { return c == '/' })
 			node := m.children
 			for i := 0; i < len(parts); i++ {
-				if _, ok := node[`"` + parts[i] + `"`]; !ok {
-					node[`"` + parts[i] + `"`] = make(map[string]interface{})
+				np := `"` + parts[i] + `"`
+				if _, ok := node[np]; !ok {
+					node[np] = make(map[string]interface{})
 				}
-                if (node[`"` + parts[i] + `"`]) != nil {
-				if reflect.TypeOf(node[`"` + parts[i] + `"`]).Kind() == reflect.String {
-					err := fmt.Errorf("directory %s is conflicting with an existing file", hostpath)
-					fmt.Println(err)
-					return err
+				if (node[np]) != nil {
+					if reflect.TypeOf(node[np]).Kind() == reflect.String {
+						err := fmt.Errorf("directory %s is conflicting with an existing file", hostpath)
+						fmt.Println(err)
+						return err
+					}
+					node = node[np].(map[string]interface{})
+				} else {
+					node = node[np].(map[string]interface{})
 				}
-				node = node[`"` + parts[i] + `"`].(map[string]interface{})
-                } else {
-     				node = node[parts[i]].(map[string]interface{})
-                    fmt.Println("NILLLL")
-                }
-				// node = node[`"` + parts[i] + `"`].(map[string]interface{})
 			}
 		} else {
 			err = m.AddFile(vmpath, hostpath)
@@ -135,12 +134,13 @@ func (m *Manifest) FileExists(filepath string) bool {
 	parts := strings.FieldsFunc(filepath, func(c rune) bool { return c == '/' })
 	node := m.children
 	for i := 0; i < len(parts)-1; i++ {
-		if _, ok := node[`"` + parts[i] + `"`]; !ok {
+		np := `"` + parts[i] + `"`
+		if _, ok := node[np]; !ok {
 			return false
 		}
-		node = node[`"` + parts[i] + `"`].(map[string]interface{})
+		node = node[np].(map[string]interface{})
 	}
-	pathtest := node[`"` + parts[len(parts)-1] + `"`]
+	pathtest := node[`"`+parts[len(parts)-1]+`"`]
 	if pathtest != nil && reflect.TypeOf(pathtest).Kind() == reflect.String {
 		return true
 	}
@@ -152,25 +152,30 @@ func (m *Manifest) AddFile(filepath string, hostpath string) error {
 	parts := strings.FieldsFunc(filepath, func(c rune) bool { return c == '/' })
 	node := m.children
 	for i := 0; i < len(parts)-1; i++ {
-		if _, ok := node[`"` + parts[i] + `"`]; !ok {
-			node[`"` + parts[i] + `"`] = make(map[string]interface{})
+		np := `"` + parts[i] + `"`
+		if _, ok := node[np]; !ok {
+			node[np] = make(map[string]interface{})
 		}
-		node = node[`"` + parts[i] + `"`].(map[string]interface{})
+		node = node[np].(map[string]interface{})
 	}
-	pathtest := node[`"` + parts[len(parts)-1] + `"`]
+
+	npl := `"` + parts[len(parts)-1] + `"`
+	pathtest := node[npl]
 	if pathtest != nil && reflect.TypeOf(pathtest).Kind() != reflect.String {
 		err := fmt.Errorf("file %s overriding an existing directory", filepath)
 		fmt.Println(err)
 		return err
 	}
-	if pathtest != nil && reflect.TypeOf(pathtest).Kind() == reflect.String && node[`"` + parts[len(parts)-1] + `"`] != hostpath {
-		fmt.Printf("warning: overwriting existing file %s hostpath old: %s new: %s\n", filepath, node[parts[len(parts)-1]], hostpath)
+
+	if pathtest != nil && reflect.TypeOf(pathtest).Kind() == reflect.String && node[npl] != hostpath {
+		fmt.Printf("warning: overwriting existing file %s hostpath old: %s new: %s\n", filepath, node[npl], hostpath)
 	}
 	_, err := lookupFile(m.targetRoot, hostpath)
 	if err != nil {
 		return err
 	}
-	node[`"` + parts[len(parts)-1] + `"`] = `"` + hostpath + `"`
+
+	node[npl] = `"` + hostpath + `"`
 	return nil
 }
 
@@ -179,12 +184,13 @@ func (m *Manifest) AddLibrary(path string) {
 	parts := strings.FieldsFunc(path, func(c rune) bool { return c == '/' })
 	node := m.children
 	for i := 0; i < len(parts)-1; i++ {
-		if _, ok := node[`"` + parts[i] + `"`]; !ok {
-			node[`"` + parts[i] + `"`] = make(map[string]interface{})
+		np := `"` + parts[i] + `"`
+		if _, ok := node[np]; !ok {
+			node[np] = make(map[string]interface{})
 		}
-		node = node[`"` + parts[i] + `"`].(map[string]interface{})
+		node = node[np].(map[string]interface{})
 	}
-	node[`"` + parts[len(parts)-1] + `"`] = path
+	node[`"`+parts[len(parts)-1]+`"`] = path
 }
 
 // AddUserData adds all files in dir to
